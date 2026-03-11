@@ -6,6 +6,8 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.IO;
 using System.Globalization;
+using MTTR;
+using MTTR.Helpers;
 
 namespace AsImpL
 {
@@ -128,7 +130,7 @@ namespace AsImpL
             }
             else
             {
-                if(Path.IsPathRooted(mtlLib))
+                if (Path.IsPathRooted(mtlLib))
                 {
                     mtlPath = "file:///" + mtlLib;
                 }
@@ -137,7 +139,7 @@ namespace AsImpL
                     mtlPath = "file:///" + basePath + mtlLib;
                 }
             }
-            yield return LoadOrDownloadText(mtlPath,false);
+            yield return LoadOrDownloadText(mtlPath, false);
             if (loadedText == null)
             {
                 mtlLib = Path.GetFileName(mtlLib);
@@ -357,7 +359,10 @@ namespace AsImpL
                         }
                         break;
                     default:
-                        Debug.LogWarning("OBJ element not supported: " + p[0]);
+                        if (PluginConfig.DebugObjImporter.Value)
+                        {
+                            Tools.WriteLog("OBJ element not supported: " + p[0], warning: true);
+                        }
                         break;
                 }
             }
@@ -517,13 +522,12 @@ namespace AsImpL
                             }
                             break;
                         default:
-                            Debug.Log("this line was not processed :" + line);
                             break;
                     }
                 }
                 catch (Exception e)
                 {
-                    Debug.LogError("Error at line "+i+1+" in mtl file: " + e);
+                    Debug.LogError("Error at line " + i + 1 + " in mtl file: " + e);
                 }
             }
         }

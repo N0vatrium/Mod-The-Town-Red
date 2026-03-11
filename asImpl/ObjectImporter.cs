@@ -24,7 +24,7 @@ namespace AsImpL
         /// </summary>
         public string importAssetPath = "_ImportedOBJ";
         protected int numTotalImports = 0;
-        protected bool allLoaded = false;
+        public bool allLoaded = false;
         protected ImportOptions buildOptions;
         protected List<Loader> loaderList;
 
@@ -207,6 +207,7 @@ namespace AsImpL
             if (ImportingComplete != null)
             {
                 ImportingComplete();
+                ImportingComplete = null;
             }
         }
 

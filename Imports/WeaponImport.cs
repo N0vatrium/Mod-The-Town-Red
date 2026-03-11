@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using UnityEngine;
 
 namespace MTTR.Imports
 {
@@ -8,6 +9,14 @@ namespace MTTR.Imports
 
         [DefaultValue("one")]
         public string HoldType { get; set; }
+
+        public Vector3? HandHold { get; set; }
+
+        public Vector3? HandHoldEnemy { get; set; }
+
+        public Vector3? HandHoldNonCombat { get; set; }
+
+        public Quaternion? HandHoldEnemyLocalRotationInverse { get; set; }
 
         [DefaultValue(false)]
         public bool AttemptToFixStabPosition { get; set; }

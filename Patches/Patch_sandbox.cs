@@ -11,14 +11,14 @@ namespace MTTR.Patches
     {
         public static bool Loaded = false;
         private static ObjectImporter importer;
-        static void Postfix(FinalMenu __instance)
+        static void Postfix(PTTRPlayer __instance)
         {
             if (GameManager.CurrentLevel != "Sandbox")
             {
                 return;
             }
             var spawnPoint = new Vector3(__instance.gameObject.transform.position.x, __instance.gameObject.transform.position.y, __instance.gameObject.transform.position.z - 2);
-            var katana = Tools.SpawnItemAt("9766a4851c58f484d97fcacf8df71c46", spawnPoint);
+            //var katana = Tools.SpawnItemAt("9766a4851c58f484d97fcacf8df71c46", spawnPoint);
             Tools.SpawnItemAt("novatrium.diamond_sword", spawnPoint);
 
             /*var import = Plugin.Instance.Importer.ProcessJsonFile(Utility.CombinePaths(Datastore.MODEL_PATH, "sword.json"));

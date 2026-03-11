@@ -1,25 +1,33 @@
 ﻿using BepInEx;
+using MTTR.Helpers;
+using MTTR.Importers;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
-using System.Collections.Generic;
-using MTTR.Helpers;
-using MTTR.Factories;
-using MTTR.Importers;
 
 namespace MTTR
 {
     public class Datastore
     {
+        const ushort WEAPON_ID_OFFSET = 1000;
+        const ushort STAGE_WEAPON_ID = 666;
+
         public static Datastore Instance { get; private set; }
 
         public static string BASE_PATH = (new Uri(new Uri(typeof(Plugin).Assembly.Location), relativeUri: ".")).LocalPath;
 
-        public static string DATA_PATH = Utility.CombinePaths(BASE_PATH, MyPluginInfo.PLUGIN_GUID + "_data");
+        public static string DATA_PATH_NAME = MyPluginInfo.PLUGIN_GUID + "_data";
+        public static string DATA_PATH = Utility.CombinePaths(BASE_PATH, DATA_PATH_NAME);
         public static string MODEL_PATH = Utility.CombinePaths(DATA_PATH, "models");
         public static string DEF_PATH = Utility.CombinePaths(DATA_PATH, "defs");
 
+        public static string STAGE_PATH_NAME = Utility.CombinePaths(DATA_PATH_NAME, "stage");
+        public static string STAGE_PATH = Utility.CombinePaths(DATA_PATH, "stage");
+        public static string STAGE_JSON_PATH = Utility.CombinePaths(STAGE_PATH, "asset.json");
+
         public Dictionary<string, DataStoreEntry> Store = [];
+        public Dictionary<string, short> WeaponStore = [];
 
         public Datastore()
         {
@@ -27,7 +35,7 @@ namespace MTTR
         }
         public void Init()
         {
-            foreach (var item in new string[] { DATA_PATH, MODEL_PATH, DEF_PATH })
+            foreach (var item in new string[] { DATA_PATH, MODEL_PATH, DEF_PATH, STAGE_PATH })
             {
                 Directory.CreateDirectory(item);
             }
@@ -39,7 +47,6 @@ namespace MTTR
 
             var jsonImporter = Plugin.Instance.JsonImporter;
             var modelImporter = Plugin.Instance.ModelImporter;
-            var factory = new WeaponFactory();
 
             foreach (var def in defs)
             {
@@ -49,13 +56,7 @@ namespace MTTR
                 {
                     try
                     {
-                        var generated = factory.Generate(imported);
-
-                        // the lesser evil way to hide it frop the loading sceen camera, can't disabled, can't toggle renderers
-                        //generated.transform.position = new Vector3(-1000, 0, 0);
-                        modelImporter.ImportModel(imported.Name, Utility.CombinePaths(MODEL_PATH, imported.Weapon.Model), generated.transform);
-
-                        StoreItem(imported.Id, generated, DataType.WEAPON, false);
+                        modelImporter.ImportModel(imported, Utility.CombinePaths(MODEL_PATH, imported.Weapon.Model));
                     }
                     catch (Exception ex)
                     {
@@ -66,10 +67,8 @@ namespace MTTR
             }
         }
 
-        public void StoreItem(string id, GameObject gameObject, DataType type, bool isVanilla, bool force = false)
+        public void StoreItem(string id, GameObject gameObject, DataType type, bool isVanilla, bool force = false, bool stage = false)
         {
-            gameObject = gameObject.transform.root.gameObject;
-
             if (Store.ContainsKey(id))
             {
                 if (force)
@@ -82,24 +81,79 @@ namespace MTTR
                 return;
             }
 
-            UnityEngine.Object.DontDestroyOnLoad(gameObject);
+
+            if (!isVanilla)
+            {
+                UnityEngine.Object.DontDestroyOnLoad(gameObject);
+                gameObject = gameObject.transform.root.gameObject;
+                gameObject.active = false;
+            }
 
             Store.Add(id, new DataStoreEntry(gameObject, type, isVanilla));
         }
 
+        public void DestroyItem(string id)
+        {
+            if (!Store.ContainsKey(id))
+            {
+                Tools.WriteLog("Tried to detroy " + id + " from datastore but isn't present");
+                return;
+            }
+
+            if (WeaponStore.ContainsKey(id))
+            {
+                WeaponStore.Remove(id);
+            }
+
+            GameObject.Destroy(Store[id].GameObject);
+            Store.Remove(id);
+        }
+
 #nullable enable
-        public GameObject? TryGetGameObject(string id)
+        public GameObject? TryGetGameObject(string id, bool instantiate = true)
         {
             if (Store.ContainsKey(id))
             {
-                Tools.WriteLog("Cache hit");
                 var gameObject = Store[id].GameObject;
-                Tools.ToggleObjectRenderers(gameObject, true);
+
+                if (instantiate)
+                {
+                    gameObject = GameObject.Instantiate(gameObject);
+                    gameObject.active = true;
+                    Tools.ToggleObjectRenderers(gameObject, true);
+                    Tools.TogglePhysic(gameObject, true);
+                }
+                
 
                 return gameObject;
             }
 
             return null;
+        }
+
+        public short CreateWeaponId(string itemId)
+        {
+            if (WeaponStore.ContainsKey(itemId))
+            {
+                Tools.WriteLog("Reusing weapon ID " + WeaponStore[itemId] + " already attributed to " + itemId);
+
+                return WeaponStore[itemId];
+            }
+
+            var weaponId = Convert.ToInt16(itemId == "mttr.stage" ? 666 : WEAPON_ID_OFFSET + WeaponStore.Count);
+            WeaponStore[itemId] = weaponId;
+
+            return weaponId;
+        }
+
+        public StageStatus GetStageStatus()
+        {
+            if (!File.Exists(STAGE_JSON_PATH))
+            {
+                return StageStatus.MISSING;
+            }
+
+            return Store.ContainsKey("mttr.stage") ? StageStatus.LOADED : StageStatus.UNLOADED;
         }
 
         public class DataStoreEntry
@@ -120,6 +174,15 @@ namespace MTTR
         {
             ASSET,
             WEAPON
+        }
+
+        public enum StageStatus
+        {
+            MISSING,
+            UNLOADED,
+            LOADED,
+            DATA_ERROR,
+            MODEL_ERROR,
         }
     }
 }

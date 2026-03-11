@@ -14,7 +14,7 @@ namespace AsImpL
 
         public bool convertToDoubleSided = false;
 
-        public float modelScaling = 1f;
+        public float modelScaling = .5f;
 
         public bool reuseLoaded = false;
 

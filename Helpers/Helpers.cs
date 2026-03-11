@@ -1,4 +1,6 @@
-﻿using System.Reflection.Metadata;
+﻿using Il2CppInterop.Runtime.InteropTypes.Arrays;
+using System.Collections.Generic;
+using System.Reflection.Metadata;
 using TMPro;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -44,20 +46,19 @@ namespace MTTR.Helpers
 
         public static GameObject? SpawnItemAt(string guid, Vector3 position)
         {
-            var asset = LoadAsset(guid);
+            var child = LoadAsset(guid);
 
-            if (asset == null)
+            if (child == null)
             {
                 return null;
             }
 
-            var child = GameObject.Instantiate(asset);
             child.transform.position = position;
 
             return child;
         }
 
-        public static GameObject? LoadAsset(string id)
+        public static GameObject? LoadAsset(string id, bool instantiate = true)
         {
             var cached = Datastore.Instance.TryGetGameObject(id);
             if (cached != null)
@@ -71,7 +72,7 @@ namespace MTTR.Helpers
             if (handle.Status == AsyncOperationStatus.Succeeded)
             {
                 CacheGameObject(id, handle.Result, true);
-                return handle.Result;
+                return instantiate ? GameObject.Instantiate(handle.Result) : handle.Result;
             }
             else
             {
@@ -93,7 +94,6 @@ namespace MTTR.Helpers
             var loaded = LoadAsset("5f23ed8e39ba41b4589ed5dff02c6eec");
             if (loaded != null)
             {
-                loaded = GameObject.Instantiate(loaded);
                 loaded.name = "MTTR-button";
 
                 var textComp = loaded.GetComponent<FinalMenuStandardButton>();
@@ -104,7 +104,7 @@ namespace MTTR.Helpers
                 return loaded;
             }
 
-            return new GameObject("MTTR-button");
+            return new GameObject("MTTR-button-empty");
         }
 
         public static void ToggleObjectRenderers(GameObject gameObject, bool enabled)
@@ -113,7 +113,22 @@ namespace MTTR.Helpers
 
             foreach (Renderer renderer in renderers)
             {
+                if (renderer.gameObject.name.Contains("HandHold"))
+                {
+                    continue;
+                }
+
                 renderer.enabled = enabled;
+            }
+        }
+
+        public static void TogglePhysic(GameObject gameObject, bool enabled)
+        {
+            var rb = gameObject.GetComponent<Rigidbody>();
+
+            if (rb != null)
+            {
+                rb.isKinematic = !enabled;
             }
         }
     }

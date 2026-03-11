@@ -5,6 +5,7 @@ using BepInEx.Unity.IL2CPP;
 using HarmonyLib;
 using MTTR.Helpers;
 using MTTR.Importers;
+using MTTR.Monos;
 using System.Reflection;
 
 namespace MTTR;
@@ -33,6 +34,12 @@ public class Plugin : BasePlugin
         AddComponent<BaseMono>();
         AddComponent<ModelReferences>();
         AddComponent<PathSettings>();
+
+        AddComponent<StageEntity>();
+        AddComponent<WorldButtonStage>();
+        AddComponent<StageStatusDisplay>();
+
+        AddComponent<MTTRPlayer>();
 
         JsonImporter = new JsonImporter();
 

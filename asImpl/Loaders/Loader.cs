@@ -1,4 +1,5 @@
-﻿using MTTR.Helpers;
+﻿using MTTR;
+using MTTR.Helpers;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -195,7 +196,6 @@ namespace AsImpL
             objLoadingProgress.fileName = fileName;
             objLoadingProgress.error = false;
             objLoadingProgress.message = "Loading " + fileName + "...";
-            Debug.LogFormat("Loading {0}\n  from: {1}...", objName, absolutePath);
 
             yield return null;
 
@@ -205,28 +205,7 @@ namespace AsImpL
             // TODO: implementation of a caching mechanism for models downloaded from an URL
 
             // if the model was already loaded duplicate the existing object
-            if (buildOptions != null && buildOptions.reuseLoaded && loadedModels.ContainsKey(normalizedPath) && loadedModels[normalizedPath] != null)
-            {
-                Debug.LogFormat("File {0} already loaded, creating instance.", normalizedPath);
-                instanceCount[normalizedPath]++;
-                if (name == null || name == "") objName = objName + "_" + instanceCount[normalizedPath];
-                objLoadingProgress.message = "Instantiating " + objName + "...";
-                while (loadedModels[normalizedPath] == null)
-                {
-                    yield return null;
-                }
 
-
-                GameObject newObj = GameObject.Instantiate(loadedModels[normalizedPath]);
-                yield return newObj;
-                OnCreated(newObj, absolutePath);
-                newObj.name = objName;
-
-                if (parentObj != null) newObj.transform.parent = parentObj.transform;
-                totalProgress.singleProgress.Remove(objLoadingProgress);
-                OnLoaded(newObj, absolutePath);
-                yield break;
-            }
             loadedModels[normalizedPath] = null; // define a key for the dictionary
             instanceCount[normalizedPath] = 0; // define a key for the dictionary
 
@@ -253,15 +232,19 @@ namespace AsImpL
             loadStats.totalTime = Time.realtimeSinceStartup - startTime;
 
             Tools.ToggleObjectRenderers(loadedModels[normalizedPath], false);
-            Debug.Log("Done: " + objName
-                + "\n  Loaded in " + loadStats.totalTime + " seconds"
-                + "\n  Model data parsed in " + loadStats.modelParseTime + " seconds"
-                + "\n  Material data parsed in " + loadStats.materialsParseTime + " seconds"
-                + "\n  Game objects built in " + loadStats.buildTime + " seconds"
-                + "\n    textures: " + loadStats.buildStats.texturesTime + " seconds"
-                + "\n    materials: " + loadStats.buildStats.materialsTime + " seconds"
-                + "\n    objects: " + loadStats.buildStats.objectsTime + " seconds"
-                );
+            if (PluginConfig.DebugObjImporter.Value)
+            {
+                Tools.WriteLog("Done: " + objName
+                    + "\n  Loaded in " + loadStats.totalTime + " seconds"
+                    + "\n  Model data parsed in " + loadStats.modelParseTime + " seconds"
+                    + "\n  Material data parsed in " + loadStats.materialsParseTime + " seconds"
+                    + "\n  Game objects built in " + loadStats.buildTime + " seconds"
+                    + "\n    textures: " + loadStats.buildStats.texturesTime + " seconds"
+                    + "\n    materials: " + loadStats.buildStats.materialsTime + " seconds"
+                    + "\n    objects: " + loadStats.buildStats.objectsTime + " seconds"
+                    );
+            }
+
             totalProgress.singleProgress.Remove(objLoadingProgress);
             OnLoaded(loadedModels[normalizedPath], absolutePath);
         }
@@ -410,7 +393,7 @@ namespace AsImpL
 
             objLoadingProgress.message = "Building scene objects...";
 
-           ////newObj.transform.localScale = Vector3.one * Scaling;
+            ////newObj.transform.localScale = Vector3.one * Scaling;
             float initProgress = objLoadingProgress.percentage;
             Builder.StartBuildObjectAsync(dataSet, newObj);
             while (Builder.BuildObjectAsync(ref info))

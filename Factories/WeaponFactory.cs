@@ -1,8 +1,11 @@
-﻿using MTTR.Helpers;
+﻿using EPOOutline;
 using MTTR.Imports;
 using System;
 using System.Collections.Generic;
+using TNet;
 using UnityEngine;
+using static Weapon.WeaponHoldType;
+using Tools = MTTR.Helpers.Tools;
 
 namespace MTTR.Factories
 {
@@ -10,17 +13,46 @@ namespace MTTR.Factories
     {
         public static readonly Dictionary<string, Weapon.WeaponHoldType> HoldTypes = new()
         {
-            { "one", Weapon.WeaponHoldType.OneHanded },
-            { "two_thin", Weapon.WeaponHoldType.TwoHandedThin },
-            { "two_thick", Weapon.WeaponHoldType.TwoHandedThick }
+            { "one", OneHanded },
+            { "two_thin", TwoHandedThin },
+            { "two_thick", TwoHandedThick }
         };
 
-        public GameObject Generate(BaseImport import)
+        public GameObject Generate(BaseImport import, GameObject weapon)
         {
-            var weapon = new GameObject(import.Name);
-            //weapon.active = false;
+            // check weapon body and end
+            var weaponBody = weapon.transform.Find("Body");
+            if (weaponBody == null)
+            {
+                FormatLog("Imported model is missing a child named Body", import);
+            }
 
+            var endFormat = "Body_end";
+            var weaponEnd = weapon.transform.Find(endFormat);
+            if (weaponEnd == null)
+            {
+                FormatLog("Imported model is missing a child named Body_end", import);
+            }
+            weaponEnd.transform.SetParent(weaponBody);
+
+            SetupWeaponChild(weaponBody.gameObject);
+            SetupWeaponChild(weaponEnd.gameObject);
+
+            var rigidbody = weapon.AddComponent<Rigidbody>();
+            Tools.TogglePhysic(weapon, false);
+
+            var weaponVoxelHolder = new GameObject("VoxelWeapon");
+            weaponVoxelHolder.transform.SetParent(weapon.transform);
+            var weaponVoxel = weaponVoxelHolder.AddComponent<VoxelWeapon>();
+            weaponVoxel.enabled = false;
+
+            var tnObject = weapon.AddComponent<TNObject>();
+            var impactEfects = weapon.AddComponent<ImpactEffects>();
+
+            Tools.WriteLog("Ignore the following error, I need to decomp the game to find the source because I'm assigning the value a few lines after this", warning: true);
             var weaponComp = weapon.AddComponent<Weapon>();
+
+            weaponComp.breakStickInChild = weaponEnd;
 
             var importedWeapon = import.Weapon;
 
@@ -29,17 +61,34 @@ namespace MTTR.Factories
                 FormatLog("Weapon is null", import);
             }
 
-            if(importedWeapon.Model == null)
+            if (importedWeapon.Model == null)
             {
                 FormatLog("Weapon model is null", import);
             }
 
 
-            if (!HoldTypes.ContainsKey(importedWeapon.HoldType)){
+            if (!HoldTypes.ContainsKey(importedWeapon.HoldType))
+            {
                 FormatLog("HoldType should be one of " + String.Join(',', HoldTypes.Keys), import);
             }
             weaponComp.weaponHoldType = HoldTypes[importedWeapon.HoldType];
 
+            switch (weaponComp.weaponHoldType)
+            {
+                case OneHanded:
+                    weaponComp.handHold = CreateHandPosOrFail(weapon, "HandHold", importedWeapon);
+                    weaponComp.handHoldEnemy = CreateHandPosOrFail(weapon, "HandHoldEnemy", importedWeapon);
+                    weaponComp.handHoldNonCombat = CreateHandPosOrFail(weapon, "HandHoldNonCombat", importedWeapon);
+
+                    if (importedWeapon.HandHoldEnemyLocalRotationInverse != null)
+                    {
+                        weaponComp.handHoldEnemyLocalRotationInverse = (Quaternion)importedWeapon.HandHoldEnemyLocalRotationInverse.Value;
+                    }
+
+                    break;
+            }
+
+            // apply all properties
             weaponComp.attemptToFixStabPosition = importedWeapon.AttemptToFixStabPosition;
             weaponComp.breakChanceOnBlock = importedWeapon.BreakChanceOnBlock;
             weaponComp.breakChanceOnBlockFullHealth = importedWeapon.BreakChanceOnBlockFullHealth;
@@ -100,13 +149,61 @@ namespace MTTR.Factories
             weaponComp.weaponDamageAmountOnBlock = importedWeapon.WeaponDamageAmountOnBlock;
             weaponComp.weaponDamageAmountOnHit = importedWeapon.WeaponDamageAmountOnHit;
 
+            // static stuff
+            weaponComp.additionalLeftHandRotation = new Vector3(180, 0, 0);
+            weaponComp.cameraRelativeForwardDirectionOnThrow = new Vector3(-1, 0, 0);
+            weaponComp.cameraRelativeUpDirectionOnThrow = new Vector3(0, 0, -1);
+            weaponComp.weaponTypeID = Datastore.Instance.CreateWeaponId(import.Id);
+
+            weaponComp.FillChildRendererArray();
+            weaponComp.FillVoxelWeapons();
+            weaponComp.PostSpawn();
             return weapon;
         }
 
-        public void FormatLog(string message, BaseImport context, bool error= true)
+        public void SetupWeaponChild(GameObject child)
+        {
+            child.AddComponent<PTTRDecalSystem>();
+            var collider = child.AddComponent<MeshCollider>();
+            collider.convex = true;
+
+            child.AddComponent<TargetStateListener>();
+        }
+
+        public void FormatLog(string message, BaseImport context, bool error = true)
         {
             message = "Factory error for \"" + context?.Name + "\": " + message;
             Tools.WriteLog(message, error: error);
+
+            throw new System.Exception(message);
+        }
+
+        private Transform CreateHandPosOrFail(GameObject parent, string name, WeaponImport importData)
+        {
+            var child = parent.transform.Find(name);
+            if (child != null)
+            {
+                var message = "Child " + name + " already present in " + parent.name + " using HoldType " + HoldTypes[importData.HoldType];
+                LogCrash(message);
+            }
+
+            Vector3? pos = (Vector3?)importData.GetType().GetProperty(name).GetValue(importData, null);
+            if (pos == null)
+            {
+                var message = "Missing position named " + name + " in JSON config using HoldType " + HoldTypes[importData.HoldType];
+                LogCrash(message);
+            }
+
+            child = new GameObject(name).transform;
+            child.SetParent(parent.transform);
+            child.localPosition = (Vector3)pos;
+
+            return child;
+        }
+
+        private void LogCrash(string message)
+        {
+            Tools.WriteLog(message, error: true);
 
             throw new System.Exception(message);
         }
