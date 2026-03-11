@@ -1,16 +1,5 @@
-# PTTR Town Arsenal
+# MTTR
 
-The goal of this mod is to increase weapons lethality, for both player and npc
+This mod is a framework the modding Paint The Town Red. It does nothing on its own but you can add your own ingame assets using the loader
 
-## Installation
-
-If you already installed BepInEx for PTTR skip to step 4
-
-1. Install [BepInEx (BE) 6.0.0-x IL2CPP](https://builds.bepinex.dev/projects/bepinex_be) (ex: Unity.IL2CPP-win-x64)  
-2. Start the game without any mods, wait for it to generate the files
-3. Once loaded in the main menu close the game
-4. Copy the DLL to BepInEx/plugins
-
-
-## Usage
-1. Change unlimited ammo (default true) and gun cooldown (default -60%) in BepInEx/config/TownArsenal.cfg
+Check the [wiki](../../wiki) for installation and usage
