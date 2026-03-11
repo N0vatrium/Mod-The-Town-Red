@@ -1,5 +1,4 @@
 ﻿using BepInEx.Unity.IL2CPP.UnityEngine;
-using MTTR.Helpers;
 using UnityEngine;
 using KeyCode = BepInEx.Unity.IL2CPP.UnityEngine.KeyCode;
 
@@ -16,8 +15,8 @@ namespace MTTR.Monos
                 var pttr = GetComponent<PTTRPlayer>();
                 if (pttr != null)
                 {
-                    Tools.WriteLog("trigger");
-                    Tools.SpawnItemAt("efd1b8713911dd74bb4fe054cb71e62a", transform.position);
+                    
+
                 }
 
                 return;
