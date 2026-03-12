@@ -2,7 +2,6 @@
 using MTTR.Helpers;
 using UnityEngine;
 using UnityEngine.Events;
-using static FinalMenuStandardButton;
 
 #nullable enable
 namespace MTTR.Patches

@@ -7,6 +7,7 @@ using UnityEngine;
 using System.Collections;
 using static MTTR.Datastore;
 using System;
+using Newtonsoft.Json;
 
 namespace MTTR.Importers
 {
@@ -30,7 +31,7 @@ namespace MTTR.Importers
         }
 
 #nullable enable
-        public void ImportModel(BaseImport import, string path, Action<GameObject>? callback = null, bool stage = false)
+        public void ImportModel(BaseImport import, string path, Action<GameObject>? callback = null, Action<bool>? errorCallback = null, bool stage = false)
         {
             Transform parent = new GameObject("ImportHolder").transform;
 
@@ -45,11 +46,24 @@ namespace MTTR.Importers
                     model.transform.localScale = (Vector3)import.Scale;
                 }
 
-                var generated = AddProperties(import, model);
+                try
+                {
+                    var generated = AddProperties(import, model);
 
-                Datastore.Instance.StoreItem(import.Id, generated, import.Type == "weapon" ? DataType.WEAPON : DataType.ASSET, false, stage: stage);
+                    Datastore.Instance.StoreItem(import.Id, generated, import.Type == "weapon" ? DataType.WEAPON : DataType.ASSET, false, stage: stage);
 
-                callback?.Invoke(stage ? generated : GameObject.Instantiate(generated));
+                    callback?.Invoke(stage ? generated : GameObject.Instantiate(generated));
+                }
+                catch (JsonReaderException ex)
+                {
+                    GameObject.Destroy(model);
+                    errorCallback?.Invoke(true);
+                    throw;
+                }
+                finally
+                {
+                    GameObject.Destroy(parent);
+                }
             };
 
             _objectImporter.ImportError += (string path) =>

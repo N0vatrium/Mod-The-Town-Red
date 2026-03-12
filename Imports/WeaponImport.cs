@@ -12,11 +12,29 @@ namespace MTTR.Imports
 
         public Vector3? HandHold { get; set; }
 
+        public Vector3? HandHoldRight { get; set; }
+
+        public Vector3? HandHoldTwoHandRight { get; set; }
+
         public Vector3? HandHoldEnemy { get; set; }
+
+        public Vector3? HandHoldEnemyRight { get; set; }
+
+        public Vector3? HandHoldEnemyLeft { get; set; }
 
         public Vector3? HandHoldNonCombat { get; set; }
 
+        public Quaternion? HandHoldNonCombatLocalRotationInverse { get; set; }
+
+        public Quaternion? HandHoldNonCombatRightLocalRotationInverse { get; set; }
+
+        public Quaternion? HandHoldRightTwoLocalRotationInverse { get; set; }
+
+        public Quaternion? UseHandHoldLocalRotationInverse { get; set; }
+
         public Quaternion? HandHoldEnemyLocalRotationInverse { get; set; }
+
+        public Quaternion? HandHoldEnemyRightLocalRotationInverse { get; set; }
 
         [DefaultValue(false)]
         public bool AttemptToFixStabPosition { get; set; }

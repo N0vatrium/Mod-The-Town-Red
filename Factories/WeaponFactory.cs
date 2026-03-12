@@ -1,5 +1,6 @@
 ﻿using EPOOutline;
 using MTTR.Imports;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using TNet;
@@ -49,7 +50,7 @@ namespace MTTR.Factories
             var tnObject = weapon.AddComponent<TNObject>();
             var impactEfects = weapon.AddComponent<ImpactEffects>();
 
-            Tools.WriteLog("Ignore the following error, I need to decomp the game to find the source because I'm assigning the value a few lines after this", warning: true);
+            Tools.WriteLog("Ignore the following Unity error, I need to decomp the game to find the source because I'm assigning the values a few lines after this", warning: true);
             var weaponComp = weapon.AddComponent<Weapon>();
 
             weaponComp.breakStickInChild = weaponEnd;
@@ -73,18 +74,32 @@ namespace MTTR.Factories
             }
             weaponComp.weaponHoldType = HoldTypes[importedWeapon.HoldType];
 
+            weaponComp.handHold = CreateHandPosOrFail(weapon, "HandHold", importedWeapon);
+            weaponComp.useHandHold = weaponComp.handHold;
+            weaponComp.handHoldNonCombat = CreateHandPosOrFail(weapon, "HandHoldNonCombat", importedWeapon);
+
+            weaponComp.handHoldEnemyLocalRotationInverse = CreateRotation(importedWeapon.HandHoldEnemyLocalRotationInverse);
+            weaponComp.handHoldNonCombatLocalRotationInverse = CreateRotation(importedWeapon.HandHoldNonCombatLocalRotationInverse);
+            weaponComp.handHoldRightTwoLocalRotationInverse = CreateRotation(importedWeapon.HandHoldRightTwoLocalRotationInverse);
+            weaponComp.useHandHoldLocalRotationInverse = CreateRotation(importedWeapon.UseHandHoldLocalRotationInverse);
+
+
             switch (weaponComp.weaponHoldType)
             {
+                case TwoHandedThin:
+                case TwoHandedThick:
+                    weaponComp.handHoldTwoHandedRight = CreateHandPosOrFail(weapon, "HandHoldTwoHandRight", importedWeapon);
+                    weaponComp.handHoldTwoHandRightIK = weaponComp.handHoldTwoHandedRight;
+
+                    weaponComp.handHoldEnemy = CreateHandPosOrFail(weapon, "HandHoldEnemyLeft", importedWeapon);
+                    weaponComp.handHoldEnemyRight = CreateHandPosOrFail(weapon, "HandHoldEnemy", importedWeapon);
+
+                    weaponComp.handHoldEnemyRightLocalRotationInverse = CreateRotation(importedWeapon.HandHoldEnemyRightLocalRotationInverse);
+                    weaponComp.handHoldNonCombatRightLocalRotationInverse = CreateRotation(importedWeapon.HandHoldNonCombatRightLocalRotationInverse);
+
+                    break;
                 case OneHanded:
-                    weaponComp.handHold = CreateHandPosOrFail(weapon, "HandHold", importedWeapon);
                     weaponComp.handHoldEnemy = CreateHandPosOrFail(weapon, "HandHoldEnemy", importedWeapon);
-                    weaponComp.handHoldNonCombat = CreateHandPosOrFail(weapon, "HandHoldNonCombat", importedWeapon);
-
-                    if (importedWeapon.HandHoldEnemyLocalRotationInverse != null)
-                    {
-                        weaponComp.handHoldEnemyLocalRotationInverse = (Quaternion)importedWeapon.HandHoldEnemyLocalRotationInverse.Value;
-                    }
-
                     break;
             }
 
@@ -178,6 +193,11 @@ namespace MTTR.Factories
             throw new System.Exception(message);
         }
 
+        private Quaternion CreateRotation(Quaternion? quaternion)
+        {
+            return quaternion == null ? new Quaternion() : (Quaternion)quaternion;
+        }
+
         private Transform CreateHandPosOrFail(GameObject parent, string name, WeaponImport importData)
         {
             var child = parent.transform.Find(name);
@@ -205,7 +225,7 @@ namespace MTTR.Factories
         {
             Tools.WriteLog(message, error: true);
 
-            throw new System.Exception(message);
+            throw new JsonReaderException(message);
         }
     }
 }

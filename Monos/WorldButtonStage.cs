@@ -1,7 +1,10 @@
 ﻿using BepInEx;
 using MTTR.Extensions;
 using MTTR.Helpers;
+using MTTR.Imports;
 using MTTR.Patches;
+using Newtonsoft.Json;
+using System;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -51,7 +54,6 @@ namespace MTTR.Monos
             {
                 if (enemy.faction == playerFaction)
                 {
-                    enemy.Kill(false);
                     GameObject.Destroy(enemy.gameObject);
                 }
             }
@@ -81,7 +83,23 @@ namespace MTTR.Monos
             var jsonImporter = Plugin.Instance.JsonImporter;
             var modelImporter = Plugin.Instance.ModelImporter;
 
-            var imported = jsonImporter.ProcessJsonFile(Datastore.STAGE_JSON_PATH);
+            BaseImport imported = null;
+
+            try
+            {
+                imported = jsonImporter.ProcessJsonFile(Datastore.STAGE_JSON_PATH);
+            }
+            catch (JsonReaderException ex)
+            {
+                Patch_sandbox_stage.Display.SetStatus(Datastore.StageStatus.DATA_ERROR);
+                ResetButton();
+            }
+            catch (Exception ex)
+            {
+                Patch_sandbox_stage.Display.SetStatus(Datastore.StageStatus.MODEL_ERROR);
+                ResetButton();
+            }
+
             imported.Id = "mttr.stage";
 
             modelImporter.ImportModel(imported, Utility.CombinePaths(Datastore.STAGE_PATH, imported.Weapon.Model), stage: true, callback: (GameObject generated) =>
@@ -121,14 +139,25 @@ namespace MTTR.Monos
                     }
                 }
 
-                _button.tempCantUse = false;
+                ResetButton();
+
                 Patch_sandbox_stage.Display.LoadedName = imported.Name;
                 Patch_sandbox_stage.Display.UpdateStatus();
-                _button.PressButton();
-                _button.SetText(_text);
+            }, errorCallback: (bool isJson) =>
+            {
+                Tools.WriteLog("??2");
+                Patch_sandbox_stage.Display.SetStatus(Datastore.StageStatus.DATA_ERROR);
+                ResetButton();
             });
 
             return true;
+        }
+
+        public void ResetButton()
+        {
+            _button.tempCantUse = false;
+            _button.PressButton();
+            _button.SetText(_text);
         }
     }
 }
