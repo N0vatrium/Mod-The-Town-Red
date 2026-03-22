@@ -91,6 +91,8 @@ namespace MTTR.Monos
             }
             catch (JsonReaderException ex)
             {
+
+                Tools.WriteLog($"{ex.Message}");
                 Patch_sandbox_stage.Display.SetStatus(Datastore.StageStatus.DATA_ERROR);
                 ResetButton();
             }

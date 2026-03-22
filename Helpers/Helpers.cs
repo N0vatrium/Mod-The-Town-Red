@@ -71,7 +71,11 @@ namespace MTTR.Helpers
 
             if (handle.Status == AsyncOperationStatus.Succeeded)
             {
-                CacheGameObject(id, handle.Result, true);
+                if (instantiate)
+                {
+                    CacheGameObject(id, handle.Result, true);
+                }
+
                 return instantiate ? GameObject.Instantiate(handle.Result) : handle.Result;
             }
             else

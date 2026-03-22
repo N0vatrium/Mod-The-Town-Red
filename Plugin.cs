@@ -30,7 +30,7 @@ public class Plugin : BasePlugin
         Log = base.Log;
         PluginConfig.Init(Config);
 
-        // register il2cpp compos
+        // register il2cpp comps
         AddComponent<BaseMono>();
         AddComponent<ModelReferences>();
         AddComponent<PathSettings>();

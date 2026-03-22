@@ -7,6 +7,9 @@ namespace MTTR.Imports
     {
         public string Model { get; set; }
 
+        [DefaultValue("melee")]
+        public string WeaponType { get; set; }
+
         [DefaultValue("one")]
         public string HoldType { get; set; }
 
@@ -218,5 +221,94 @@ namespace MTTR.Imports
 
         [DefaultValue(0f)]
         public float WeaponDamageAmountOnHit { get; set; }
+
+
+        // Gun specific
+
+        [DefaultValue(0f)]
+        public float AccuracyChangeMaxLeftRight { get; set; }
+
+        [DefaultValue(0f)]
+        public float AccuracyChangeMaxUpDown { get; set; }
+
+        [DefaultValue(0f)]
+        public float AccuracyImproveSpeed { get; set; }
+
+        [DefaultValue(0f)]
+        public float AccuracyReducePerShot { get; set; }
+
+        [DefaultValue(0)]
+        public int Ammo { get; set; }
+
+        // ak47 bullet
+        [DefaultValue("73e9ac69cf296a1469e316922d91ef7e")]
+        public string Bullet { get; set; }
+
+        [DefaultValue(true)]
+        public bool ChangeAccuracy { get; set; }
+
+        [DefaultValue(false)]
+        public bool ChargedShot { get; set; }
+
+        //TODO gun anims
+
+        [DefaultValue(false)]
+        public bool HasAdjustedAmmo { get; set; }
+
+        [DefaultValue(false)]
+        public bool HasLoadAnimation { get; set; }
+
+        [DefaultValue(false)]
+        public bool HasSwitchedToMelee { get; set; }
+
+        [DefaultValue(false)]
+        public bool IsMageStaff { get; set; }
+
+        [DefaultValue(0f)]
+        public float LoadDelay { get; set; }
+
+        [DefaultValue(0)]
+        public int NumBullets { get; set; }
+
+        public Vector3? ShootPoint { get; set; }
+
+        [DefaultValue(0)]
+        public int NumShootPoints { get; set; }
+
+        //TODO add seeker logic
+
+        // PumpActionSmoke
+        [DefaultValue("8ce8f0a655ee50542840cc4b5a4486f5")]
+        public string ShootEffect { get; set; }
+
+        [DefaultValue(0f)]
+        public float ShotFrequency { get; set; }
+
+        [DefaultValue(0f)]
+        public float SpreadAngle { get; set; }
+
+        [DefaultValue(0f)]
+        public float SpreadAngleVertical { get; set; }
+
+        [DefaultValue(true)]
+        public bool StartCombatOnShoot { get; set; }
+
+        [DefaultValue(0f)]
+        public float SwitchToMeleeDelay { get; set; }
+
+        [DefaultValue(false)]
+        public bool SyncShots { get; set; }
+
+        [DefaultValue(false)]
+        public bool UnlimitedAmmo { get; set; }
+
+        [DefaultValue(false)]
+        public bool Use3rdPersonOffset1 { get; set; }
+
+        [DefaultValue(false)]
+        public bool Use3rdPersonOffset2 { get; set; }
+
+        [DefaultValue(false)]
+        public bool UseNonGunHitEnemyCheck { get; set; }
     }
 }
